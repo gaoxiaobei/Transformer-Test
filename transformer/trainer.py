@@ -38,10 +38,13 @@ class LabelSmoothingLoss(nn.Module):
         self.vocab_size = vocab_size
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-        # pred: (batch, seq_len, vocab_size) - log probabilities
+        # pred: (batch, seq_len, vocab_size) - logits
         # target: (batch, seq_len)
         pred = pred.contiguous().view(-1, pred.size(-1))
         target = target.contiguous().view(-1)
+
+        # Apply log_softmax since model outputs logits, KLDivLoss expects log_probs
+        pred = torch.log_softmax(pred, dim=-1)
 
         true_dist = torch.zeros_like(pred)
         true_dist.fill_(self.smoothing / (self.vocab_size - 2))  # -2 for padding and true token
