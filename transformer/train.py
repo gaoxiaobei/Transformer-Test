@@ -49,6 +49,7 @@ def main() -> None:
 
     # Load data
     train_loader, val_loader, src_vocab, tgt_vocab = get_dataloaders(
+        data_dir=config.data_dir,
         batch_size=config.batch_size,
         num_workers=config.num_workers,
         max_len=config.max_len,

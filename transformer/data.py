@@ -1,30 +1,60 @@
 """Data loading for machine translation tasks."""
 
+import os
+import urllib.request
+import zipfile
 from typing import Optional
 
 import torch
 from torch.utils.data import Dataset, DataLoader
 
 
-class TranslationDataset(Dataset):
-    """Simple translation dataset."""
+class Vocabulary:
+    """Vocabulary for tokenization."""
 
-    def __init__(
-        self,
-        src_sentences: list[list[int]],
-        tgt_sentences: list[list[int]],
-        max_len: int = 512,
-    ):
+    def __init__(self):
+        self.word2idx = {"<pad>": 0, "<sos>": 1, "<eos>": 2, "<unk>": 3}
+        self.idx2word = {0: "<pad>", 1: "<sos>", 2: "<eos>", 3: "<unk>"}
+        self.pad_idx = 0
+        self.sos_idx = 1
+        self.eos_idx = 2
+        self.unk_idx = 3
+
+    def add_sentence(self, sentence: str) -> None:
+        for word in sentence.strip().split():
+            if word not in self.word2idx:
+                idx = len(self.word2idx)
+                self.word2idx[word] = idx
+                self.idx2word[idx] = word
+
+    def encode(self, sentence: str) -> list[int]:
+        return [self.sos_idx] + [self.word2idx.get(w, self.unk_idx) for w in sentence.strip().split()] + [self.eos_idx]
+
+    def decode(self, indices: list[int]) -> str:
+        words = [self.idx2word.get(i, "<unk>") for i in indices]
+        words = [w for w in words if w not in ["<pad>", "<sos>", "<eos>"]]
+        return " ".join(words)
+
+    def __len__(self) -> int:
+        return len(self.word2idx)
+
+
+class TranslationDataset(Dataset):
+    """Translation dataset."""
+
+    def __init__(self, src_sentences: list[str], tgt_sentences: list[str], src_vocab: Vocabulary, tgt_vocab: Vocabulary, max_len: int = 512):
         self.src_sentences = src_sentences
         self.tgt_sentences = tgt_sentences
+        self.src_vocab = src_vocab
+        self.tgt_vocab = tgt_vocab
         self.max_len = max_len
 
     def __len__(self) -> int:
         return len(self.src_sentences)
 
     def __getitem__(self, idx: int) -> dict[str, torch.Tensor]:
-        src = self.src_sentences[idx][: self.max_len]
-        tgt = self.tgt_sentences[idx][: self.max_len]
+        src = self.src_vocab.encode(self.src_sentences[idx])[: self.max_len]
+        tgt = self.tgt_vocab.encode(self.tgt_sentences[idx])[: self.max_len]
         return {
             "src": torch.tensor(src, dtype=torch.long),
             "tgt": torch.tensor(tgt, dtype=torch.long),
@@ -32,7 +62,7 @@ class TranslationDataset(Dataset):
 
 
 def collate_fn(batch: list[dict], pad_idx: int = 0) -> dict[str, torch.Tensor]:
-    """Collate function for variable-length sequences."""
+    """Pad sequences in batch."""
     src_lens = [item["src"].size(0) for item in batch]
     tgt_lens = [item["tgt"].size(0) for item in batch]
     max_src_len = max(src_lens)
@@ -48,85 +78,88 @@ def collate_fn(batch: list[dict], pad_idx: int = 0) -> dict[str, torch.Tensor]:
     return {"src": src_batch, "tgt": tgt_batch}
 
 
-class Vocabulary:
-    """Simple vocabulary class."""
+def download_multi30k(data_dir: str) -> tuple[list[str], list[str], list[str], list[str]]:
+    """Download and load Multi30k dataset (de-en)."""
+    os.makedirs(data_dir, exist_ok=True)
 
-    def __init__(self):
-        self.word2idx = {"<pad>": 0, "<sos>": 1, "<eos>": 2, "<unk>": 3}
-        self.idx2word = {0: "<pad>", 1: "<sos>", 2: "<eos>", 3: "<unk>"}
-        self.pad_idx = 0
-        self.sos_idx = 1
-        self.eos_idx = 2
-        self.unk_idx = 3
+    # Multi30k URLs
+    base_url = "https://raw.githubusercontent.com/multi30k/dataset/master/data/task1/raw/"
+    files = {
+        "train.de": "train.de.gz",
+        "train.en": "train.en.gz",
+        "val.de": "val.de.gz",
+        "val.en": "val.en.gz",
+    }
 
-    def add_sentence(self, sentence: str) -> None:
-        for word in sentence.split():
-            if word not in self.word2idx:
-                idx = len(self.word2idx)
-                self.word2idx[word] = idx
-                self.idx2word[idx] = word
+    import gzip
 
-    def encode(self, sentence: str) -> list[int]:
-        return [self.sos_idx] + [self.word2idx.get(w, self.unk_idx) for w in sentence.split()] + [self.eos_idx]
+    data = {}
+    for name, remote in files.items():
+        local_path = os.path.join(data_dir, name)
+        gz_path = os.path.join(data_dir, remote)
 
-    def decode(self, indices: list[int]) -> str:
-        words = [self.idx2word.get(i, "<unk>") for i in indices]
-        # Remove special tokens
-        words = [w for w in words if w not in ["<pad>", "<sos>", "<eos>"]]
-        return " ".join(words)
+        if not os.path.exists(local_path):
+            print(f"Downloading {remote}...")
+            urllib.request.urlretrieve(base_url + remote, gz_path)
+            with gzip.open(gz_path, "rb") as f_in:
+                with open(local_path, "wb") as f_out:
+                    f_out.write(f_in.read())
+            os.remove(gz_path)
 
-    def __len__(self) -> int:
-        return len(self.word2idx)
+        with open(local_path, "r", encoding="utf-8") as f:
+            data[name] = [line.strip() for line in f.readlines()]
+
+    return data["train.de"], data["train.en"], data["val.de"], data["val.en"]
 
 
 def get_dataloaders(
+    data_dir: str = "./transformer/data",
     batch_size: int = 64,
     num_workers: int = 4,
-    max_len: int = 512,
+    max_len: int = 128,
+    vocab_min_freq: int = 2,
 ) -> tuple[DataLoader, DataLoader, Vocabulary, Vocabulary]:
-    """Get train and validation dataloaders.
+    """Get train and validation dataloaders for machine translation (de-en)."""
 
-    Note: This is a placeholder. For actual training, you would load
-    real translation data (e.g., WMT, Multi30k, IWSLT).
-    """
-    # Example: Create dummy data for testing
-    src_vocab = Vocabulary()
-    tgt_vocab = Vocabulary()
+    # Download/load data
+    train_de, train_en, val_de, val_en = download_multi30k(data_dir)
 
-    # Add some example sentences to build vocab
-    examples = [
-        ("hello world", "hallo welt"),
-        ("how are you", "wie geht es dir"),
-        ("good morning", "guten morgen"),
-        ("thank you very much", "vielen dank"),
-        ("see you later", "bis spater"),
-    ]
+    print(f"Train samples: {len(train_de)}")
+    print(f"Val samples: {len(val_de)}")
 
-    src_sentences = []
-    tgt_sentences = []
+    # Build vocabularies
+    from collections import Counter
 
-    for src, tgt in examples:
-        src_vocab.add_sentence(src)
-        tgt_vocab.add_sentence(tgt)
-        src_sentences.append(src_vocab.encode(src))
-        tgt_sentences.append(tgt_vocab.encode(tgt))
+    def build_vocab(sentences: list[str], min_freq: int = 2) -> Vocabulary:
+        vocab = Vocabulary()
+        word_counts = Counter()
+        for sent in sentences:
+            word_counts.update(sent.strip().split())
 
-    # Repeat to create a larger dataset
-    src_sentences = src_sentences * 100
-    tgt_sentences = tgt_sentences * 100
+        for word, count in word_counts.items():
+            if count >= min_freq:
+                vocab.add_sentence(word)
 
-    # Split into train and val
-    n_train = int(len(src_sentences) * 0.9)
+        return vocab
 
-    train_dataset = TranslationDataset(src_sentences[:n_train], tgt_sentences[:n_train], max_len)
-    val_dataset = TranslationDataset(src_sentences[n_train:], tgt_sentences[n_train:], max_len)
+    src_vocab = build_vocab(train_de, vocab_min_freq)
+    tgt_vocab = build_vocab(train_en, vocab_min_freq)
 
+    print(f"Source vocab (de): {len(src_vocab)} words")
+    print(f"Target vocab (en): {len(tgt_vocab)} words")
+
+    # Create datasets
+    train_dataset = TranslationDataset(train_de, train_en, src_vocab, tgt_vocab, max_len)
+    val_dataset = TranslationDataset(val_de, val_en, src_vocab, tgt_vocab, max_len)
+
+    # Create dataloaders
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
         collate_fn=lambda b: collate_fn(b, src_vocab.pad_idx),
+        pin_memory=True,
     )
 
     val_loader = DataLoader(
@@ -135,6 +168,7 @@ def get_dataloaders(
         shuffle=False,
         num_workers=num_workers,
         collate_fn=lambda b: collate_fn(b, src_vocab.pad_idx),
+        pin_memory=True,
     )
 
     return train_loader, val_loader, src_vocab, tgt_vocab

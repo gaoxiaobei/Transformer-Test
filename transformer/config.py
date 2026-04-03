@@ -15,12 +15,12 @@ class TrainConfig:
     num_encoder_layers: int = 6
     num_decoder_layers: int = 6
     dropout: float = 0.1
-    max_len: int = 512
+    max_len: int = 128  # Multi30k sentences are short
 
     # Training
-    batch_size: int = 64
+    batch_size: int = 128  # 4090 can handle larger batches
     num_workers: int = 8
-    epochs: int = 10
+    epochs: int = 20
     lr: float = 1e-4
     weight_decay: float = 1e-4
     warmup_steps: int = 4000

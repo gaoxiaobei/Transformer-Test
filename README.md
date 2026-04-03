@@ -23,16 +23,17 @@ python train.py --epochs 10 --device cuda
 
 ### 2. Attention Is All You Need
 
-A faithful implementation of the original Transformer model from the paper "Attention Is All You Need" (Vaswani et al., 2017).
+A faithful implementation of the original Transformer model from the paper "Attention Is All You Need" (Vaswani et al., 2017) for **Machine Translation (German → English)**.
 
 **Location:** [transformer/](transformer/)
 
 **Features:**
 - Full encoder-decoder architecture
 - Multi-head self-attention
-- Positional encoding
+- Sinusoidal positional encoding
 - Label smoothing
 - Learning rate warmup schedule
+- Multi30k dataset (German-English)
 - Designed for 4090 GPU
 
 **Architecture (Base model):**
@@ -43,8 +44,11 @@ A faithful implementation of the original Transformer model from the paper "Atte
 
 **Quick Start:**
 ```bash
-cd transformer
-python train.py --epochs 10 --batch-size 64
+# Train
+python -m transformer.train --epochs 10 --batch-size 64
+
+# Translate
+python -m transformer.translate --text "ein mann steht auf einer straße"
 ```
 
 ## Requirements
@@ -82,11 +86,12 @@ pip install -r requirements.txt
 │
 ├── transformer/
 │   ├── config.py             # Training config
-│   ├── data.py               # Data loading utilities
+│   ├── data.py               # Multi30k data loading
 │   ├── model.py              # Transformer model
 │   ├── trainer.py            # Training utilities
 │   ├── utils.py              # Helper functions
-│   └── train.py              # Training script
+│   ├── train.py              # Training script
+│   └── translate.py          # Translation inference
 │
 ├── pyproject.toml
 └── README.md
