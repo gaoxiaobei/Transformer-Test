@@ -3,8 +3,8 @@ from dataclasses import dataclass
 
 @dataclass
 class TrainConfig:
-    data_dir: str = "./data"
-    checkpoint_dir: str = "./checkpoints"
+    data_dir: str = "./mnist/data"
+    checkpoint_dir: str = "./mnist/checkpoints"
     seed: int = 42
 
     batch_size: int = 64

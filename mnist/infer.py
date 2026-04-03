@@ -3,10 +3,10 @@ import argparse
 import torch
 from torchvision import datasets
 
-from mnist_transformer.config import TrainConfig
-from mnist_transformer.data import get_mnist_transforms
-from mnist_transformer.model import SequenceTransformerClassifier
-from mnist_transformer.utils import get_device
+from mnist.mnist_transformer.config import TrainConfig
+from mnist.mnist_transformer.data import get_mnist_transforms
+from mnist.mnist_transformer.model import SequenceTransformerClassifier
+from mnist.mnist_transformer.utils import get_device
 
 
 def parse_args() -> argparse.Namespace:

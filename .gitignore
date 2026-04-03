@@ -11,3 +11,8 @@ wheels/
 
 # Downloaded data
 data/
+
+# Checkpoints
+checkpoints/
+mnist/checkpoints/
+transformer/checkpoints/

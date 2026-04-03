@@ -3,11 +3,11 @@ import argparse
 import torch
 from torch import nn
 
-from mnist_transformer.config import TrainConfig
-from mnist_transformer.data import get_dataloaders
-from mnist_transformer.model import SequenceTransformerClassifier
-from mnist_transformer.trainer import run_epoch
-from mnist_transformer.utils import get_device, should_pin_memory
+from mnist.mnist_transformer.config import TrainConfig
+from mnist.mnist_transformer.data import get_dataloaders
+from mnist.mnist_transformer.model import SequenceTransformerClassifier
+from mnist.mnist_transformer.trainer import run_epoch
+from mnist.mnist_transformer.utils import get_device, should_pin_memory
 
 
 def parse_args() -> argparse.Namespace:

@@ -8,10 +8,10 @@ import torch
 from PIL import Image, ImageOps
 from torchvision import transforms
 
-from mnist_transformer.config import TrainConfig
-from mnist_transformer.data import MNIST_MEAN, MNIST_STD
-from mnist_transformer.model import SequenceTransformerClassifier
-from mnist_transformer.utils import get_device
+from mnist.mnist_transformer.config import TrainConfig
+from mnist.mnist_transformer.data import MNIST_MEAN, MNIST_STD
+from mnist.mnist_transformer.model import SequenceTransformerClassifier
+from mnist.mnist_transformer.utils import get_device
 
 
 def load_model(checkpoint_path: str, device: torch.device) -> SequenceTransformerClassifier:
@@ -56,7 +56,7 @@ def predict(image: dict, model: SequenceTransformerClassifier, device: torch.dev
 
 def main():
     parser = argparse.ArgumentParser(description="Web UI MNIST demo")
-    parser.add_argument("--checkpoint", type=str, default="./checkpoints/best_model.pt")
+    parser.add_argument("--checkpoint", type=str, default="./mnist/checkpoints/best_model.pt")
     parser.add_argument("--device", type=str, default="cpu", choices=["cpu", "cuda"])
     parser.add_argument("--share", action="store_true", help="Create public link")
     parser.add_argument("--port", type=int, default=7860)

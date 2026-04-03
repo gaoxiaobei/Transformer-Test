@@ -9,10 +9,10 @@ import torch
 from PIL import Image, ImageDraw, ImageOps
 from torchvision import transforms
 
-from mnist_transformer.config import TrainConfig
-from mnist_transformer.data import MNIST_MEAN, MNIST_STD
-from mnist_transformer.model import SequenceTransformerClassifier
-from mnist_transformer.utils import get_device
+from mnist.mnist_transformer.config import TrainConfig
+from mnist.mnist_transformer.data import MNIST_MEAN, MNIST_STD
+from mnist.mnist_transformer.model import SequenceTransformerClassifier
+from mnist.mnist_transformer.utils import get_device
 
 
 class DrawCanvas(tk.Canvas):
