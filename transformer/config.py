@@ -21,7 +21,7 @@ class TrainConfig:
     batch_size: int = 128  # 4090 can handle larger batches
     num_workers: int = 8
     epochs: int = 20
-    lr: float = 1e-4
+    lr: float = 1.0
     weight_decay: float = 1e-4
     warmup_steps: int = 4000
     grad_clip_norm: float = 1.0

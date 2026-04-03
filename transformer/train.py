@@ -91,9 +91,9 @@ def main() -> None:
     for epoch in range(config.epochs):
         train_loss, _ = train_epoch(
             model, train_loader, criterion, optimizer, scheduler, device,
-            src_vocab.pad_idx, config.grad_clip_norm
+            tgt_vocab.pad_idx, config.grad_clip_norm
         )
-        val_loss, _ = evaluate(model, val_loader, criterion, device, src_vocab.pad_idx)
+        val_loss, _ = evaluate(model, val_loader, criterion, device, tgt_vocab.pad_idx)
 
         print(f"Epoch {epoch + 1}/{config.epochs}")
         print(f"  Train loss: {train_loss:.4f}")
