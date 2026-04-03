@@ -20,6 +20,10 @@ def get_device(preferred: str = "cpu") -> torch.device:
     return torch.device("cpu")
 
 
+def should_pin_memory(device: torch.device) -> bool:
+    return device.type == "cuda"
+
+
 def accuracy_from_logits(logits: torch.Tensor, labels: torch.Tensor) -> float:
     preds = torch.argmax(logits, dim=1)
     correct = (preds == labels).float().sum().item()

@@ -21,6 +21,7 @@ def get_dataloaders(
     val_split: float = 0.1,
     num_workers: int = 2,
     seed: int = 42,
+    pin_memory: bool = False,
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
     transform = get_mnist_transforms()
 
@@ -38,21 +39,21 @@ def get_dataloaders(
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
-        pin_memory=False,
+        pin_memory=pin_memory,
     )
     val_loader = DataLoader(
         val_set,
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=False,
+        pin_memory=pin_memory,
     )
     test_loader = DataLoader(
         test_set,
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=False,
+        pin_memory=pin_memory,
     )
 
     return train_loader, val_loader, test_loader

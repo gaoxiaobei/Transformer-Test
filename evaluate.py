@@ -7,7 +7,7 @@ from mnist_transformer.config import TrainConfig
 from mnist_transformer.data import get_dataloaders
 from mnist_transformer.model import SequenceTransformerClassifier
 from mnist_transformer.trainer import run_epoch
-from mnist_transformer.utils import get_device
+from mnist_transformer.utils import get_device, should_pin_memory
 
 
 def parse_args() -> argparse.Namespace:
@@ -22,6 +22,7 @@ def main() -> None:
     args = parse_args()
     config = TrainConfig(batch_size=args.batch_size, device=args.device)
     device = get_device(config.device)
+    pin_memory = should_pin_memory(device)
 
     _, _, test_loader = get_dataloaders(
         data_dir=config.data_dir,
@@ -29,6 +30,7 @@ def main() -> None:
         val_split=config.val_split,
         num_workers=config.num_workers,
         seed=config.seed,
+        pin_memory=pin_memory,
     )
 
     model = SequenceTransformerClassifier(
@@ -40,7 +42,7 @@ def main() -> None:
         num_classes=config.num_classes,
     ).to(device)
 
-    checkpoint = torch.load(args.checkpoint, map_location=device)
+    checkpoint = torch.load(args.checkpoint, map_location=device, weights_only=False)
     model.load_state_dict(checkpoint["model_state_dict"])
 
     criterion = nn.CrossEntropyLoss()

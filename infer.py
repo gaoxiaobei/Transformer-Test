@@ -31,7 +31,7 @@ def main() -> None:
         num_classes=config.num_classes,
     ).to(device)
 
-    checkpoint = torch.load(args.checkpoint, map_location=device)
+    checkpoint = torch.load(args.checkpoint, map_location=device, weights_only=False)
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
 

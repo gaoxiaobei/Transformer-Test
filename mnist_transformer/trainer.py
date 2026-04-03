@@ -50,7 +50,7 @@ def fit(
     val_loader: DataLoader,
     criterion: nn.Module,
     optimizer: torch.optim.Optimizer,
-    scheduler: torch.optim.lr_scheduler._LRScheduler,
+    scheduler: torch.optim.lr_scheduler.LRScheduler,
     device: torch.device,
     epochs: int,
     checkpoint_dir: str,
@@ -79,7 +79,6 @@ def fit(
             criterion=criterion,
             device=device,
             optimizer=None,
-            grad_clip_norm=grad_clip_norm,
         )
 
         scheduler.step()

@@ -7,7 +7,7 @@ from mnist_transformer.config import TrainConfig
 from mnist_transformer.data import get_dataloaders
 from mnist_transformer.model import SequenceTransformerClassifier
 from mnist_transformer.trainer import fit
-from mnist_transformer.utils import get_device, set_seed
+from mnist_transformer.utils import get_device, set_seed, should_pin_memory
 
 
 def parse_args() -> argparse.Namespace:
@@ -34,6 +34,7 @@ def main() -> None:
 
     set_seed(config.seed)
     device = get_device(config.device)
+    pin_memory = should_pin_memory(device)
     print(f"Using device: {device}")
 
     train_loader, val_loader, _ = get_dataloaders(
@@ -42,6 +43,7 @@ def main() -> None:
         val_split=config.val_split,
         num_workers=config.num_workers,
         seed=config.seed,
+        pin_memory=pin_memory,
     )
 
     model = SequenceTransformerClassifier(
