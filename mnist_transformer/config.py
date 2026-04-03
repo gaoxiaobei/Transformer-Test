@@ -8,7 +8,7 @@ class TrainConfig:
     seed: int = 42
 
     batch_size: int = 64
-    num_workers: int = 2
+    num_workers: int = 8
     val_split: float = 0.1
 
     d_model: int = 64
