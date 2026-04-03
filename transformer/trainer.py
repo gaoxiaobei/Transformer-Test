@@ -31,8 +31,7 @@ class LabelSmoothingLoss(nn.Module):
 
     def __init__(self, vocab_size: int, padding_idx: int, smoothing: float = 0.1):
         super().__init__()
-        self.criterion = nn.CrossEntropyLoss(ignore_index=padding_idx, label_smoothing=smoothing, reduction='sum')
-        self.padding_idx = padding_idx
+        self.criterion = nn.CrossEntropyLoss(ignore_index=padding_idx, label_smoothing=smoothing)
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         # pred: (batch, seq_len, vocab_size) - logits
@@ -80,9 +79,8 @@ def train_epoch(
         optimizer.step()
         scheduler.step()
 
-        n_tokens = (tgt_output != pad_idx).sum().item()
-        total_loss += loss.item() * n_tokens
-        total_tokens += n_tokens
+        total_loss += loss.item()
+        total_tokens += 1
 
     return total_loss / total_tokens, 0.0
 
@@ -114,9 +112,8 @@ def evaluate(
         output = model(src, tgt_input, src_mask, tgt_mask)
         loss = criterion(output, tgt_output)
 
-        n_tokens = (tgt_output != pad_idx).sum().item()
-        total_loss += loss.item() * n_tokens
-        total_tokens += n_tokens
+        total_loss += loss.item()
+        total_tokens += 1
 
     return total_loss / total_tokens, 0.0
 
