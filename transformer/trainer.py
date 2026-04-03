@@ -31,29 +31,15 @@ class LabelSmoothingLoss(nn.Module):
 
     def __init__(self, vocab_size: int, padding_idx: int, smoothing: float = 0.1):
         super().__init__()
-        self.criterion = nn.KLDivLoss(reduction="sum")
+        self.criterion = nn.CrossEntropyLoss(ignore_index=padding_idx, label_smoothing=smoothing, reduction='sum')
         self.padding_idx = padding_idx
-        self.confidence = 1.0 - smoothing
-        self.smoothing = smoothing
-        self.vocab_size = vocab_size
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         # pred: (batch, seq_len, vocab_size) - logits
         # target: (batch, seq_len)
         pred = pred.contiguous().view(-1, pred.size(-1))
         target = target.contiguous().view(-1)
-
-        # Apply log_softmax since model outputs logits, KLDivLoss expects log_probs
-        pred = torch.log_softmax(pred, dim=-1)
-
-        true_dist = torch.zeros_like(pred)
-        true_dist.fill_(self.smoothing / (self.vocab_size - 2))  # -2 for padding and true token
-        true_dist.scatter_(1, target.unsqueeze(1), self.confidence)
-        true_dist[:, self.padding_idx] = 0
-        mask = target == self.padding_idx
-        true_dist[mask] = 0
-
-        return self.criterion(pred, true_dist)
+        return self.criterion(pred, target)
 
 
 def train_epoch(
